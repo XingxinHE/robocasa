@@ -2961,6 +2961,7 @@ TASK_SET_REGISTRY = dict(
     lifelong_learning_phase2=LIFELONG_LEARNING_TASKS["lifelong_learning_phase2"],
     lifelong_learning_phase3=LIFELONG_LEARNING_TASKS["lifelong_learning_phase3"],
     lifelong_learning_phase4=LIFELONG_LEARNING_TASKS["lifelong_learning_phase4"],
+    microwave_single=["TurnOnMicrowave"],
 )
 
 DATASET_SOUP_REGISTRY = dict(
@@ -3087,5 +3088,8 @@ DATASET_SOUP_REGISTRY = dict(
         + get_ds_soup(
             split="target", task_set="all_tasks", source="human_cotraining_cams"
         ),
+    ),
+    microwave_single_target_human=get_ds_soup(
+        split="target", task_set="microwave_single", source="human"
     ),
 )
