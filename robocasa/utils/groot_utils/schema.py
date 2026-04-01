@@ -16,7 +16,7 @@
 from enum import Enum
 from typing import Optional
 
-from numpydantic import NDArray
+import numpy as np
 from pydantic import BaseModel, Field, field_serializer
 
 from .embodiment_tags import EmbodimentTag
@@ -155,9 +155,9 @@ class LeRobotModalityMetadata(BaseModel):
                 )
             return self.video[subkey]
         elif modality == "annotation":
-            assert (
-                self.annotation is not None
-            ), "Trying to get annotation metadata for a dataset with no annotations"
+            assert self.annotation is not None, (
+                "Trying to get annotation metadata for a dataset with no annotations"
+            )
             if subkey not in self.annotation:
                 raise ValueError(
                     f"Key: {key}, annotation key {subkey} not found in metadata, available annotation keys: {self.annotation.keys()}"
@@ -171,16 +171,16 @@ class LeRobotModalityMetadata(BaseModel):
 
 
 class DatasetStatisticalValues(BaseModel):
-    max: NDArray = Field(..., description="Maximum values")
-    min: NDArray = Field(..., description="Minimum values")
-    mean: NDArray = Field(..., description="Mean values")
-    std: NDArray = Field(..., description="Standard deviation")
-    q01: NDArray = Field(..., description="1st percentile values")
-    q99: NDArray = Field(..., description="99th percentile values")
+    max: list[float] = Field(..., description="Maximum values")
+    min: list[float] = Field(..., description="Minimum values")
+    mean: list[float] = Field(..., description="Mean values")
+    std: list[float] = Field(..., description="Standard deviation")
+    q01: list[float] = Field(..., description="1st percentile values")
+    q99: list[float] = Field(..., description="99th percentile values")
 
     @field_serializer("*", when_used="json")
-    def serialize_ndarray(self, v: NDArray) -> list[float]:
-        return v.tolist()  # type: ignore
+    def serialize_ndarray(self, v: list[float]) -> list[float]:
+        return np.asarray(v, dtype=np.float32).tolist()
 
 
 class DatasetStatistics(BaseModel):
