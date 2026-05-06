@@ -217,6 +217,8 @@ def process_demo_batch(
         env_meta["env_kwargs"]["generative_textures"] = "100p"
     if args.randomize_cameras:
         env_meta["env_kwargs"]["randomize_cameras"] = True
+    if args.use_cotraining_cameras:
+        env_meta["env_kwargs"]["use_cotraining_cameras"] = True
 
     # Create environment for this process
     env = EnvUtils.create_env_for_data_processing(
@@ -778,6 +780,11 @@ if __name__ == "__main__":
         "--randomize-cameras",
         action="store_true",
         help="(optional) randomize camera poses for robosuite environments",
+    )
+    parser.add_argument(
+        "--use_cotraining_cameras",
+        action="store_true",
+        help="(optional) use COTRAIN_CAM_CONFIGS for camera poses and intrinsics",
     )
 
     # Add multiprocessing argument

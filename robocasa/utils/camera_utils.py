@@ -3,10 +3,11 @@ Collection of constants for cameras / robots / etc
 in kitchen environments
 """
 
-from scipy.spatial.transform import Rotation
-import numpy as np
-from copy import deepcopy
 import collections
+from copy import deepcopy
+
+import numpy as np
+from scipy.spatial.transform import Rotation
 
 # default free cameras for different kitchen layouts
 LAYOUT_CAMS = {
@@ -125,20 +126,26 @@ COTRAIN_CAM_CONFIGS = dict(
             parent_body="mobilebase0_support",
         ),
         robot0_agentview_left=dict(
-            pos=[-0.35, 0.4, 0.85],
-            # quat=[0.55623853, 0.29935253, -0.37678665, -0.6775092],
-            # euler=[-0.959931, -1.309, 3.1415 + 0.6],
-            quat=euler_to_calc_quat(x=90, y=-110, z=0, x2=-28),
+            pos=[-0.539209, 0.297463, 1.06413],
+            quat=[
+                -0.4228207938793529,
+                -0.3100428488574035,
+                0.36907982007750695,
+                0.7673826259091185,
+            ],
             camera_attribs=dict(fovy="65"),
-            parent_body="mobilebase0_support",
+            parent_body="robot0_link0",
         ),
         robot0_agentview_right=dict(
-            pos=[-0.35, -0.35, 0.85],
-            # quat=[0.55623853, 0.29935253, -0.37678665, -0.6775092],
-            # euler=[-0.959931, -1.309, 3.1415 + 0.6],
-            quat=euler_to_calc_quat(x=90, y=-65, z=0, x2=-28),
+            pos=[-0.526892, -0.312384, 1.04362],
+            quat=[
+                0.6938633063053303,
+                0.4199981854078199,
+                -0.23467710359799554,
+                -0.5358002365285308,
+            ],
             camera_attribs=dict(fovy="65"),
-            parent_body="mobilebase0_support",
+            parent_body="robot0_link0",
         ),
         robot0_frontview=dict(
             pos=[-0.50, 0, 0.95],
@@ -152,12 +159,22 @@ COTRAIN_CAM_CONFIGS = dict(
             parent_body="mobilebase0_support",
         ),
         robot0_eye_in_hand=dict(
-            pos=[-0.029, 0, 0.05],
-            camera_attribs=dict(
-                focalpixel="606 606", resolution="640 480", sensorsize="5.5 3"
-            ),
-            # euler=[-3.1415927, -0.7853981 / 1.5, 1.5707963],
-            quat=[-0.116144, -0.6975031, 0.6975031, 0.1161439],
+            pos=[
+                0.07316433864937208,
+                -0.004432145304477275,
+                0.019026,
+            ],
+            camera_attribs=dict(fovy="65"),
+            # Real calibration was measured in the Franka link8 frame.
+            # Robosuite attaches this camera to right_hand, which is rotated
+            # -45 deg about local z relative to link8, so the pose is converted
+            # into the right_hand frame here.
+            quat=[
+                0.21901126063270418,
+                0.6847708145754632,
+                0.65877255227949,
+                0.22167932602048598,
+            ],
             parent_body="robot0_right_hand",
         ),
     ),
@@ -196,7 +213,7 @@ def set_cameras(env):
     if env.randomize_cameras:
         randomize_cameras(env)
 
-    for (cam_name, cam_cfg) in env._cam_configs.items():
+    for cam_name, cam_cfg in env._cam_configs.items():
         if cam_cfg.get("parent_body", None) is not None:
             continue
 

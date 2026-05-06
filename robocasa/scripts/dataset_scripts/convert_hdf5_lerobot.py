@@ -150,6 +150,9 @@ def extract_trajectory(
 
 def create_env_from_hdf5(hdf5_path, args):
     env_meta = DatasetUtils.get_env_metadata_from_dataset(dataset_path=hdf5_path)
+    env_meta = deepcopy(env_meta)
+    if args.use_cotraining_cameras:
+        env_meta["env_kwargs"]["use_cotraining_cameras"] = True
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
         camera_names=args.camera_names,
@@ -345,6 +348,11 @@ if __name__ == "__main__":
         type=int,
         default=256,
         help="Width of the rendered camera images",
+    )
+    parser.add_argument(
+        "--use_cotraining_cameras",
+        action="store_true",
+        help="Use COTRAIN_CAM_CONFIGS when re-rendering camera observations.",
     )
     args = parser.parse_args()
     main(args)
