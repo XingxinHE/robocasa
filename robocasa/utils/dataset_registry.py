@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 from robocasa.utils.dataset_registry_utils import (
     get_ds_meta,
@@ -2964,6 +2965,29 @@ TASK_SET_REGISTRY = dict(
     microwave_single=["TurnOnMicrowave"],
 )
 
+
+ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH = os.environ.get(
+    "ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH",
+    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Real_Casa",
+)
+ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH = os.environ.get(
+    "ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH",
+    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Sim_Casa",
+)
+
+
+def _robofab_close_blender_lid_meta(path, split, source, ds_weight=1.0):
+    return dict(
+        path=path,
+        filter_key=None,
+        horizon=600,
+        task="CloseBlenderLid",
+        split=split,
+        source=source,
+        ds_weight=ds_weight,
+    )
+
+
 DATASET_SOUP_REGISTRY = dict(
     # all 50 target tasks
     target50=get_ds_soup(split="target", task_set="target50", source="human"),
@@ -3092,4 +3116,78 @@ DATASET_SOUP_REGISTRY = dict(
     microwave_single_target_human=get_ds_soup(
         split="target", task_set="microwave_single", source="human"
     ),
+    # RoboFab real/sim CloseBlenderLid co-training datasets.
+    # Paths can be overridden with ROBOFAB_CLOSE_BLENDER_LID_*_PATH env vars.
+    robofab_close_blender_lid_real_only=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
+            split="real",
+            source="robofab_real",
+            ds_weight=1.0,
+        )
+    ],
+    robofab_close_blender_lid_sim_only=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
+            split="pretrain",
+            source="robocasa_sim",
+            ds_weight=1.0,
+        )
+    ],
+    robofab_close_blender_lid_real_sim_natural=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
+            split="real",
+            source="robofab_real",
+            ds_weight=1.0,
+        ),
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
+            split="pretrain",
+            source="robocasa_sim",
+            ds_weight=1.0,
+        ),
+    ],
+    robofab_close_blender_lid_real_sim_50_50=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
+            split="real",
+            source="robofab_real",
+            ds_weight=1.0,
+        ),
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
+            split="pretrain",
+            source="robocasa_sim",
+            ds_weight=0.727,
+        ),
+    ],
+    robofab_close_blender_lid_real_sim_real_heavy=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
+            split="real",
+            source="robofab_real",
+            ds_weight=1.0,
+        ),
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
+            split="pretrain",
+            source="robocasa_sim",
+            ds_weight=0.312,
+        ),
+    ],
+    robofab_close_blender_lid_real_sim_sim_heavy=[
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
+            split="real",
+            source="robofab_real",
+            ds_weight=1.0,
+        ),
+        _robofab_close_blender_lid_meta(
+            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
+            split="pretrain",
+            source="robocasa_sim",
+            ds_weight=1.696,
+        ),
+    ],
 )
