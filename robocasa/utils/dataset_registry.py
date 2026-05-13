@@ -2972,7 +2972,7 @@ ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH = os.environ.get(
 )
 ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH = os.environ.get(
     "ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH",
-    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Sim_Casa",
+    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Sim_Casa_NoMobileBase",
 )
 
 
@@ -3159,7 +3159,7 @@ DATASET_SOUP_REGISTRY = dict(
             ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
             split="pretrain",
             source="robocasa_sim",
-            ds_weight=0.727,
+            ds_weight=0.865,
         ),
     ],
     robofab_close_blender_lid_real_sim_real_heavy=[
@@ -3173,7 +3173,7 @@ DATASET_SOUP_REGISTRY = dict(
             ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
             split="pretrain",
             source="robocasa_sim",
-            ds_weight=0.312,
+            ds_weight=0.371,
         ),
     ],
     robofab_close_blender_lid_real_sim_sim_heavy=[
@@ -3187,7 +3187,7 @@ DATASET_SOUP_REGISTRY = dict(
             ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
             split="pretrain",
             source="robocasa_sim",
-            ds_weight=1.696,
+            ds_weight=2.019,
         ),
     ],
 )
