@@ -2966,26 +2966,161 @@ TASK_SET_REGISTRY = dict(
 )
 
 
-ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH = os.environ.get(
-    "ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH",
-    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Real_Casa",
-)
-ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH = os.environ.get(
-    "ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH",
-    "/home/xhecj/project/dataset/huggingface/lerobot/xingxin-he/CloseBlenderLid_Sim_Casa_NoMobileBase",
+ROBOFAB_CASA_BLENDER_TASKS_ROOT = os.environ.get(
+    "ROBOFAB_CASA_BLENDER_TASKS_ROOT",
+    "/project/assembly/xingxin/dataset/huggingface/lerobot/xingxin-he/RoboFab_Casa_Blender_Tasks",
 )
 
 
-def _robofab_close_blender_lid_meta(path, split, source, ds_weight=1.0):
+def _robofab_blender_dataset_path(task, domain, env_var):
+    return os.environ.get(
+        env_var,
+        os.path.join(ROBOFAB_CASA_BLENDER_TASKS_ROOT, task, domain),
+    )
+
+
+ROBOFAB_BLENDER_TASK_DATASETS = OrderedDict(
+    OpenBlenderLid=dict(
+        prefix="open_blender_lid",
+        env_prefix="ROBOFAB_OPEN_BLENDER_LID",
+        real_frames=21593,
+        sim_frames=20124,
+        sim_weight_50_50=1.072997,
+        sim_weight_real_heavy=0.459856,
+        sim_weight_sim_heavy=2.503661,
+    ),
+    CloseBlenderLid=dict(
+        prefix="close_blender_lid",
+        env_prefix="ROBOFAB_CLOSE_BLENDER_LID",
+        real_frames=26856,
+        sim_frames=31042,
+        sim_weight_50_50=0.865150,
+        sim_weight_real_heavy=0.370779,
+        sim_weight_sim_heavy=2.018684,
+    ),
+    PickPlaceCounterToBlender=dict(
+        prefix="pick_place_counter_to_blender",
+        env_prefix="ROBOFAB_PICK_PLACE_COUNTER_TO_BLENDER",
+        real_frames=26035,
+        sim_frames=38892,
+        sim_weight_50_50=0.669418,
+        sim_weight_real_heavy=0.286893,
+        sim_weight_sim_heavy=1.561975,
+    ),
+)
+
+
+def _robofab_blender_meta(task, path, split, source, ds_weight=1.0):
     return dict(
         path=path,
         filter_key=None,
         horizon=600,
-        task="CloseBlenderLid",
+        task=task,
         split=split,
         source=source,
         ds_weight=ds_weight,
     )
+
+
+def _robofab_blender_soups(task, config):
+    prefix = config["prefix"]
+    env_prefix = config["env_prefix"]
+    real_path = _robofab_blender_dataset_path(
+        task, "real", f"{env_prefix}_REAL_CASA_PATH"
+    )
+    sim_path = _robofab_blender_dataset_path(task, "sim", f"{env_prefix}_SIM_CASA_PATH")
+
+    return {
+        f"robofab_{prefix}_real_only": [
+            _robofab_blender_meta(
+                task,
+                real_path,
+                split="real",
+                source="robofab_real",
+                ds_weight=1.0,
+            )
+        ],
+        f"robofab_{prefix}_sim_only": [
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=1.0,
+            )
+        ],
+        f"robofab_{prefix}_real_sim_natural": [
+            _robofab_blender_meta(
+                task,
+                real_path,
+                split="real",
+                source="robofab_real",
+                ds_weight=1.0,
+            ),
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=1.0,
+            ),
+        ],
+        f"robofab_{prefix}_real_sim_50_50": [
+            _robofab_blender_meta(
+                task,
+                real_path,
+                split="real",
+                source="robofab_real",
+                ds_weight=1.0,
+            ),
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=config["sim_weight_50_50"],
+            ),
+        ],
+        f"robofab_{prefix}_real_sim_real_heavy": [
+            _robofab_blender_meta(
+                task,
+                real_path,
+                split="real",
+                source="robofab_real",
+                ds_weight=1.0,
+            ),
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=config["sim_weight_real_heavy"],
+            ),
+        ],
+        f"robofab_{prefix}_real_sim_sim_heavy": [
+            _robofab_blender_meta(
+                task,
+                real_path,
+                split="real",
+                source="robofab_real",
+                ds_weight=1.0,
+            ),
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=config["sim_weight_sim_heavy"],
+            ),
+        ],
+    }
+
+
+def _robofab_all_blender_soups():
+    soups = {}
+    for task, config in ROBOFAB_BLENDER_TASK_DATASETS.items():
+        soups.update(_robofab_blender_soups(task, config))
+    return soups
 
 
 DATASET_SOUP_REGISTRY = dict(
@@ -3116,78 +3251,8 @@ DATASET_SOUP_REGISTRY = dict(
     microwave_single_target_human=get_ds_soup(
         split="target", task_set="microwave_single", source="human"
     ),
-    # RoboFab real/sim CloseBlenderLid co-training datasets.
-    # Paths can be overridden with ROBOFAB_CLOSE_BLENDER_LID_*_PATH env vars.
-    robofab_close_blender_lid_real_only=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
-            split="real",
-            source="robofab_real",
-            ds_weight=1.0,
-        )
-    ],
-    robofab_close_blender_lid_sim_only=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
-            split="pretrain",
-            source="robocasa_sim",
-            ds_weight=1.0,
-        )
-    ],
-    robofab_close_blender_lid_real_sim_natural=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
-            split="real",
-            source="robofab_real",
-            ds_weight=1.0,
-        ),
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
-            split="pretrain",
-            source="robocasa_sim",
-            ds_weight=1.0,
-        ),
-    ],
-    robofab_close_blender_lid_real_sim_50_50=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
-            split="real",
-            source="robofab_real",
-            ds_weight=1.0,
-        ),
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
-            split="pretrain",
-            source="robocasa_sim",
-            ds_weight=0.865,
-        ),
-    ],
-    robofab_close_blender_lid_real_sim_real_heavy=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
-            split="real",
-            source="robofab_real",
-            ds_weight=1.0,
-        ),
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
-            split="pretrain",
-            source="robocasa_sim",
-            ds_weight=0.371,
-        ),
-    ],
-    robofab_close_blender_lid_real_sim_sim_heavy=[
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_REAL_CASA_PATH,
-            split="real",
-            source="robofab_real",
-            ds_weight=1.0,
-        ),
-        _robofab_close_blender_lid_meta(
-            ROBOFAB_CLOSE_BLENDER_LID_SIM_CASA_PATH,
-            split="pretrain",
-            source="robocasa_sim",
-            ds_weight=2.019,
-        ),
-    ],
+    # RoboFab real/sim blender-task co-training datasets.
+    # Override the root with ROBOFAB_CASA_BLENDER_TASKS_ROOT, or override a
+    # leaf with ROBOFAB_<TASK>_{REAL,SIM}_CASA_PATH.
+    **_robofab_all_blender_soups(),
 )
