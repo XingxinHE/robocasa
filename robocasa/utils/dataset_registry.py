@@ -2972,10 +2972,10 @@ ROBOFAB_CASA_BLENDER_TASKS_ROOT = os.environ.get(
 )
 
 
-def _robofab_blender_dataset_path(task, domain, env_var):
+def _robofab_blender_dataset_path(dataset_dir, domain, env_var):
     return os.environ.get(
         env_var,
-        os.path.join(ROBOFAB_CASA_BLENDER_TASKS_ROOT, task, domain),
+        os.path.join(ROBOFAB_CASA_BLENDER_TASKS_ROOT, dataset_dir, domain),
     )
 
 
@@ -3007,6 +3007,13 @@ ROBOFAB_BLENDER_TASK_DATASETS = OrderedDict(
         sim_weight_real_heavy=0.286893,
         sim_weight_sim_heavy=1.561975,
     ),
+    UseToolTurnOnBlender=dict(
+        prefix="use_tool_turn_on_blender",
+        env_prefix="ROBOFAB_USE_TOOL_TURN_ON_BLENDER",
+        dataset_dir="UseToolTurnOnBlender_To_Casa",
+        real_frames=None,
+        has_sim=False,
+    ),
 )
 
 
@@ -3025,12 +3032,12 @@ def _robofab_blender_meta(task, path, split, source, ds_weight=1.0):
 def _robofab_blender_soups(task, config):
     prefix = config["prefix"]
     env_prefix = config["env_prefix"]
+    dataset_dir = config.get("dataset_dir", task)
     real_path = _robofab_blender_dataset_path(
-        task, "real", f"{env_prefix}_REAL_CASA_PATH"
+        dataset_dir, "real", f"{env_prefix}_REAL_CASA_PATH"
     )
-    sim_path = _robofab_blender_dataset_path(task, "sim", f"{env_prefix}_SIM_CASA_PATH")
 
-    return {
+    soups = {
         f"robofab_{prefix}_real_only": [
             _robofab_blender_meta(
                 task,
@@ -3040,6 +3047,16 @@ def _robofab_blender_soups(task, config):
                 ds_weight=1.0,
             )
         ],
+    }
+
+    if not config.get("has_sim", True):
+        return soups
+
+    sim_path = _robofab_blender_dataset_path(
+        dataset_dir, "sim", f"{env_prefix}_SIM_CASA_PATH"
+    )
+    soups.update(
+        {
         f"robofab_{prefix}_sim_only": [
             _robofab_blender_meta(
                 task,
@@ -3113,7 +3130,10 @@ def _robofab_blender_soups(task, config):
                 ds_weight=config["sim_weight_sim_heavy"],
             ),
         ],
-    }
+        }
+    )
+
+    return soups
 
 
 def _robofab_all_blender_soups():
