@@ -2970,12 +2970,16 @@ ROBOFAB_CASA_BLENDER_TASKS_ROOT = os.environ.get(
     "ROBOFAB_CASA_BLENDER_TASKS_ROOT",
     "/project/assembly/xingxin/dataset/huggingface/lerobot/xingxin-he/RoboFab_Casa_Blender_Tasks",
 )
+ROBOFAB_CASA_TASKS_ROOT = os.environ.get(
+    "ROBOFAB_CASA_TASKS_ROOT",
+    "/project/assembly/xingxin/dataset/huggingface/lerobot/xingxin-he/RoboFab_Casa_Tasks",
+)
 
 
-def _robofab_blender_dataset_path(dataset_dir, domain, env_var):
+def _robofab_blender_dataset_path(dataset_dir, domain, env_var, root=None):
     return os.environ.get(
         env_var,
-        os.path.join(ROBOFAB_CASA_BLENDER_TASKS_ROOT, dataset_dir, domain),
+        os.path.join(root or ROBOFAB_CASA_BLENDER_TASKS_ROOT, dataset_dir, domain),
     )
 
 
@@ -3010,8 +3014,10 @@ ROBOFAB_BLENDER_TASK_DATASETS = OrderedDict(
     UseToolTurnOnBlender=dict(
         prefix="use_tool_turn_on_blender",
         env_prefix="ROBOFAB_USE_TOOL_TURN_ON_BLENDER",
-        dataset_dir="UseToolTurnOnBlender_To_Casa",
-        real_frames=None,
+        dataset_dir="UseToolTurnOnBlender",
+        real_domain="real_v2",
+        root=ROBOFAB_CASA_TASKS_ROOT,
+        real_frames=44740,
         has_sim=False,
     ),
 )
@@ -3033,8 +3039,11 @@ def _robofab_blender_soups(task, config):
     prefix = config["prefix"]
     env_prefix = config["env_prefix"]
     dataset_dir = config.get("dataset_dir", task)
+    root = config.get("root", ROBOFAB_CASA_BLENDER_TASKS_ROOT)
+    real_domain = config.get("real_domain", "real")
+    sim_domain = config.get("sim_domain", "sim")
     real_path = _robofab_blender_dataset_path(
-        dataset_dir, "real", f"{env_prefix}_REAL_CASA_PATH"
+        dataset_dir, real_domain, f"{env_prefix}_REAL_CASA_PATH", root=root
     )
 
     soups = {
@@ -3053,7 +3062,7 @@ def _robofab_blender_soups(task, config):
         return soups
 
     sim_path = _robofab_blender_dataset_path(
-        dataset_dir, "sim", f"{env_prefix}_SIM_CASA_PATH"
+        dataset_dir, sim_domain, f"{env_prefix}_SIM_CASA_PATH", root=root
     )
     soups.update(
         {
