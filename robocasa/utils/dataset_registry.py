@@ -2970,10 +2970,6 @@ ROBOFAB_CASA_BLENDER_TASKS_ROOT = os.environ.get(
     "ROBOFAB_CASA_BLENDER_TASKS_ROOT",
     "/project/assembly/xingxin/dataset/huggingface/lerobot/xingxin-he/RoboFab_Casa_Blender_Tasks",
 )
-ROBOFAB_CASA_TASKS_ROOT = os.environ.get(
-    "ROBOFAB_CASA_TASKS_ROOT",
-    "/project/assembly/xingxin/dataset/huggingface/lerobot/xingxin-he/RoboFab_Casa_Tasks",
-)
 
 
 def _robofab_blender_dataset_path(dataset_dir, domain, env_var, root=None):
@@ -3011,12 +3007,27 @@ ROBOFAB_BLENDER_TASK_DATASETS = OrderedDict(
         sim_weight_real_heavy=0.286893,
         sim_weight_sim_heavy=1.561975,
     ),
+    MoveToTopBlender=dict(
+        prefix="move_to_top_blender",
+        env_prefix="ROBOFAB_MOVE_TO_TOP_BLENDER",
+        sim_frames=17224,
+        has_real=False,
+        has_sim=True,
+    ),
+    TurnOnBlender=dict(
+        prefix="turn_on_blender",
+        env_prefix="ROBOFAB_TURN_ON_BLENDER",
+        real_frames=16138,
+        sim_frames=11698,
+        sim_weight_50_50=1.379552,
+        sim_weight_real_heavy=0.591237,
+        sim_weight_sim_heavy=3.218955,
+    ),
     UseToolTurnOnBlender=dict(
         prefix="use_tool_turn_on_blender",
         env_prefix="ROBOFAB_USE_TOOL_TURN_ON_BLENDER",
         dataset_dir="UseToolTurnOnBlender",
         real_domain="real_v2",
-        root=ROBOFAB_CASA_TASKS_ROOT,
         real_frames=44740,
         has_sim=False,
     ),
@@ -3042,12 +3053,16 @@ def _robofab_blender_soups(task, config):
     root = config.get("root", ROBOFAB_CASA_BLENDER_TASKS_ROOT)
     real_domain = config.get("real_domain", "real")
     sim_domain = config.get("sim_domain", "sim")
-    real_path = _robofab_blender_dataset_path(
-        dataset_dir, real_domain, f"{env_prefix}_REAL_CASA_PATH", root=root
-    )
+    has_real = config.get("has_real", True)
+    has_sim = config.get("has_sim", True)
 
-    soups = {
-        f"robofab_{prefix}_real_only": [
+    soups = {}
+
+    if has_real:
+        real_path = _robofab_blender_dataset_path(
+            dataset_dir, real_domain, f"{env_prefix}_REAL_CASA_PATH", root=root
+        )
+        soups[f"robofab_{prefix}_real_only"] = [
             _robofab_blender_meta(
                 task,
                 real_path,
@@ -3055,90 +3070,93 @@ def _robofab_blender_soups(task, config):
                 source="robofab_real",
                 ds_weight=1.0,
             )
-        ],
-    }
+        ]
 
-    if not config.get("has_sim", True):
+    if has_sim:
+        sim_path = _robofab_blender_dataset_path(
+            dataset_dir, sim_domain, f"{env_prefix}_SIM_CASA_PATH", root=root
+        )
+        soups[f"robofab_{prefix}_sim_only"] = [
+            _robofab_blender_meta(
+                task,
+                sim_path,
+                split="pretrain",
+                source="robocasa_sim",
+                ds_weight=1.0,
+            )
+        ]
+    else:
         return soups
 
-    sim_path = _robofab_blender_dataset_path(
-        dataset_dir, sim_domain, f"{env_prefix}_SIM_CASA_PATH", root=root
-    )
+    if not has_real:
+        return soups
+
     soups.update(
         {
-        f"robofab_{prefix}_sim_only": [
-            _robofab_blender_meta(
-                task,
-                sim_path,
-                split="pretrain",
-                source="robocasa_sim",
-                ds_weight=1.0,
-            )
-        ],
-        f"robofab_{prefix}_real_sim_natural": [
-            _robofab_blender_meta(
-                task,
-                real_path,
-                split="real",
-                source="robofab_real",
-                ds_weight=1.0,
-            ),
-            _robofab_blender_meta(
-                task,
-                sim_path,
-                split="pretrain",
-                source="robocasa_sim",
-                ds_weight=1.0,
-            ),
-        ],
-        f"robofab_{prefix}_real_sim_50_50": [
-            _robofab_blender_meta(
-                task,
-                real_path,
-                split="real",
-                source="robofab_real",
-                ds_weight=1.0,
-            ),
-            _robofab_blender_meta(
-                task,
-                sim_path,
-                split="pretrain",
-                source="robocasa_sim",
-                ds_weight=config["sim_weight_50_50"],
-            ),
-        ],
-        f"robofab_{prefix}_real_sim_real_heavy": [
-            _robofab_blender_meta(
-                task,
-                real_path,
-                split="real",
-                source="robofab_real",
-                ds_weight=1.0,
-            ),
-            _robofab_blender_meta(
-                task,
-                sim_path,
-                split="pretrain",
-                source="robocasa_sim",
-                ds_weight=config["sim_weight_real_heavy"],
-            ),
-        ],
-        f"robofab_{prefix}_real_sim_sim_heavy": [
-            _robofab_blender_meta(
-                task,
-                real_path,
-                split="real",
-                source="robofab_real",
-                ds_weight=1.0,
-            ),
-            _robofab_blender_meta(
-                task,
-                sim_path,
-                split="pretrain",
-                source="robocasa_sim",
-                ds_weight=config["sim_weight_sim_heavy"],
-            ),
-        ],
+            f"robofab_{prefix}_real_sim_natural": [
+                _robofab_blender_meta(
+                    task,
+                    real_path,
+                    split="real",
+                    source="robofab_real",
+                    ds_weight=1.0,
+                ),
+                _robofab_blender_meta(
+                    task,
+                    sim_path,
+                    split="pretrain",
+                    source="robocasa_sim",
+                    ds_weight=1.0,
+                ),
+            ],
+            f"robofab_{prefix}_real_sim_50_50": [
+                _robofab_blender_meta(
+                    task,
+                    real_path,
+                    split="real",
+                    source="robofab_real",
+                    ds_weight=1.0,
+                ),
+                _robofab_blender_meta(
+                    task,
+                    sim_path,
+                    split="pretrain",
+                    source="robocasa_sim",
+                    ds_weight=config["sim_weight_50_50"],
+                ),
+            ],
+            f"robofab_{prefix}_real_sim_real_heavy": [
+                _robofab_blender_meta(
+                    task,
+                    real_path,
+                    split="real",
+                    source="robofab_real",
+                    ds_weight=1.0,
+                ),
+                _robofab_blender_meta(
+                    task,
+                    sim_path,
+                    split="pretrain",
+                    source="robocasa_sim",
+                    ds_weight=config["sim_weight_real_heavy"],
+                ),
+            ],
+            f"robofab_{prefix}_real_sim_sim_heavy": [
+                _robofab_blender_meta(
+                    task,
+                    real_path,
+                    split="real",
+                    source="robofab_real",
+                    ds_weight=1.0,
+                ),
+                _robofab_blender_meta(
+                    task,
+                    sim_path,
+                    split="pretrain",
+                    source="robocasa_sim",
+                    ds_weight=config["sim_weight_sim_heavy"],
+                ),
+            ],
         }
     )
 
